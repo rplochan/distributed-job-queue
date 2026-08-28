@@ -1,17 +1,59 @@
+#include <chrono>
 #include <iostream>
+#include <thread>
 
-#include "job.h"
+#include "job-parser.h"
 #include "processor.h"
+#include "redis-client.h"
 
 int main() {
 
+    RedisClient redis;
+    JobParser parser;
     JobProcessor processor;
 
-    Job job1{1, "add", 10, 20, 0};
+    std::cout << "Worker started...\n";
 
-    int result = processor.process(job1);
+    while (true) {
 
-    std::cout << "Job " << job1.id << " result: " << result << '\n';
+        try {
+
+            // 1. Get a job from Redis
+            std::string data = redis.getJob();
+
+            // 2. No job available
+            if (data.empty()) {
+                std::this_thread::sleep_for(
+                    std::chrono::milliseconds(500)
+                );
+
+                continue;
+            }
+
+            std::cout << "Received job: "
+                      << data << '\n';
+
+            // 3. Convert string → Job
+            Job job = parser.parse(data);
+
+            // 4. Execute job
+            int result = processor.process(job);
+
+            // 5. Display result
+            std::cout << "Job "
+                      << job.id
+                      << " completed. Result: "
+                      << result
+                      << '\n';
+        }
+
+        catch (const std::exception& e) {
+
+            std::cerr << "Error: "
+                      << e.what()
+                      << '\n';
+        }
+    }
 
     return 0;
 }
