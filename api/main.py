@@ -1,8 +1,19 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+import psycopg2
 import redis
 
 app = FastAPI()
+
+
+db = psycopg2.connect(
+    host="localhost",
+    port=5432,
+    database="job_queue",
+    user="postgres",
+    password="chatapp123"
+)
+
 
 redis_client = redis.Redis(
     host = "localhost",
@@ -24,6 +35,22 @@ def root():
 def create_job(job : JobRequest):
     # generate a unique id
     job_id = redis_client.incr("job_id")
+
+
+    #save job in postgresql
+    cursor = db.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO Jobs (id, type, a,b, status)
+        VALUES (%s, %s, %s, %s, %s)
+        """,
+
+        (job_id, job.type, job.a, job.b, "queued")
+    )
+
+    db.commit()
+    cursor.close()
 
     #convert job into the format..
     job_data = f"{job_id}|{job.type}|{job.a}|{job.b}"
