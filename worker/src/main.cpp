@@ -5,12 +5,14 @@
 #include "job-parser.h"
 #include "processor.h"
 #include "redis-client.h"
+#include "postgres-client.h"
 
 int main() {
 
     RedisClient redis;
     JobParser parser;
     JobProcessor processor;
+    PostgresClient postgres;
 
     std::cout << "Worker started...\n";
 
@@ -36,8 +38,20 @@ int main() {
             // 3. Convert string → Job
             Job job = parser.parse(data);
 
+            // update the status in the postgresql
+            postgres.updateStatus(job.id, "processing");
+
             // 4. Execute job
             int result = processor.process(job);
+
+            // update the status in the postgresql
+            postgres.updateResult(job.id, result);
+
+            // mark completed in the postgresql
+            postgres.updateStatus(
+                job.id,
+                "completed"
+            );
 
             // 5. Display result
             std::cout << "Job "

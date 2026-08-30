@@ -5,7 +5,7 @@ import redis
 
 app = FastAPI()
 
-
+#connect postgresql database
 db = psycopg2.connect(
     host="localhost",
     port=5432,
