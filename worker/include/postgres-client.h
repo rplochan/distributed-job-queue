@@ -10,4 +10,6 @@ class PostgresClient {
     PostgresClient();
     void updateStatus(int jobId, const std::string& status);
     void updateResult(int jobId, int result);
+    void updateTextResult(int jobId, const std::string& result);
+    void updateError(int jobId, const std::string& error);
 };

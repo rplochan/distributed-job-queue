@@ -1,4 +1,4 @@
-#include "postgres-client.h"
+#include "../include/postgres-client.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -7,7 +7,7 @@ PostgresClient::PostgresClient()
     : conn(
         "host=localhost "
         "port=5432 "
-        "dbname=job_queue "
+        "dbname=job-queue "
         "user=postgres "
         "password=chatapp123"
       )
@@ -26,9 +26,9 @@ void PostgresClient::updateStatus(int jobId, const std::string& status){
 
     transaction.exec_params(
         "UPDATE jobs"
-        "SET status = $1"
+        "SET status = $1, updated_at = CURRENT_TIMESTAMP"
         "WHERE id = $2",
-        status, 
+        status,
         jobId
     );
 
@@ -40,10 +40,42 @@ void PostgresClient::updateResult(int jobId, int result){
 
     transaction.exec_params(
         "UPDATE jobs"
-        "SET result = $1"
+        "SET result = $1, updated_at = CURRENT_TIMESTAMP"
         "WHERE id = $2",
         result,
         jobId
     );
+    transaction.commit();
+}
+
+void PostgresClient::updateTextResult(int jobId, const std::string& result){
+    pqxx::work transaction(conn);
+
+    transaction.exec_params(
+        "UPDATE jobs"
+        "SET result_text = $1, updated_at = CURRENT_TIMESTAMP"
+        "WHERE id = $2",
+        result,
+        jobId
+    );
+
+    transaction.commit();
+}
+
+void PostgresClient::updateError(
+    int jobId,
+    const std::string& error)
+{
+    pqxx::work transaction(conn);
+
+    transaction.exec_params(
+        "UPDATE jobs "
+        "SET error = $1, status = 'failed', "
+        "updated_at = CURRENT_TIMESTAMP "
+        "WHERE id = $2",
+        error,
+        jobId
+    );
+
     transaction.commit();
 }
