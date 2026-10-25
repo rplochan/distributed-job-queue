@@ -1,6 +1,6 @@
 
 #include "../include/processor.h"
-
+#include "../include/hash-utils.h"
 #include <chrono>
 #include <limits>
 #include <stdexcept>
@@ -138,4 +138,13 @@ int JobProcessor::process(const Job& job)
     }
 
     throw std::runtime_error("unknown job type: " + job.type);
+}
+
+std::string JobProcessor::processHash(const Job &job){
+    if(job.type != "hash"){
+        throw std::runtime_error(
+            "processHash called for non-hash job"
+        );
+    }
+    return sha256(job.input);
 }

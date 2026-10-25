@@ -1,4 +1,4 @@
-#include "job-parser.h"
+#include "../include/job-parser.h"
 
 #include <sstream>
 #include <stdexcept>
@@ -12,12 +12,14 @@ Job JobParser::parse(const std::string& data) {
     std::string a;
     std::string b;
     std::string duration;
+    std::string input;
 
     std::getline(ss, id, '|');
     std::getline(ss, type, '|');
     std::getline(ss, a, '|');
     std::getline(ss, b, '|');
     std::getline(ss, duration, '|');
+    std::getline(ss, input);
 
     if (id.empty() || type.empty()) {
         throw std::runtime_error("Invalid job format");
@@ -38,6 +40,10 @@ Job JobParser::parse(const std::string& data) {
 
     if (!duration.empty()) {
         job.duration = std::stoi(duration);
+    }
+
+    if(!input.empty()){
+        job.input = input;
     }
 
     return job;

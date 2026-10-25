@@ -84,20 +84,47 @@ int main() {
 
                     int result = processor.process(job);
 
-                    {
-                        std::lock_guard<std::mutex> lock(dbMutex);
+                    if (job.type == "hash") {
+                        // Execute the hash job.
+                        std::string result = processor.processHash(job);
+
+                        // Save the text result and mark the job completed.
+                        {
+                            std::lock_guard<std::mutex> lock(dbMutex);
+
+                            postgres.updateTextResult(job.id, result);
+                            postgres.updateStatus(job.id, "completed");
+                        }
+
+                        // Print the result.
+                        {
+                            std::lock_guard<std::mutex> lock(outputMutex);
+
+                            std::cout << "Job " << job.id
+                                      << " completed. SHA-256: "
+                                      << result << '\n';
+                        }
+                    }
+                    else {
+                        // Execute an integer-result job.
+                        int result = processor.process(job);
+
+                        // Save the integer result and mark the job completed.
+                        {
+                            std::lock_guard<std::mutex> lock(dbMutex);
 
                             postgres.updateResult(job.id, result);
                             postgres.updateStatus(job.id, "completed");
+                        }
 
-                    }
+                        // Print the result.
+                        {
+                            std::lock_guard<std::mutex> lock(outputMutex);
 
-                    {
-                        std::lock_guard<std::mutex> lock(outputMutex);
-
-                        std::cout << "Job " << job.id
-                            << " completed. Result: "
-                            << result << '\n';
+                            std::cout << "Job " << job.id
+                                      << " completed. Result: "
+                                      << result << '\n';
+                        }
                     }
               }
               catch (const std::exception& e){

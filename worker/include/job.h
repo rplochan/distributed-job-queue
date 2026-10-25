@@ -6,7 +6,7 @@ struct Job {
     std::string type;
     int a = 0;
     int b = 0;
-
     int duration = 0;
+    std::string input;
 
 };
