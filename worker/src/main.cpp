@@ -82,7 +82,6 @@ int main() {
 
                     }
 
-                    int result = processor.process(job);
 
                     if (job.type == "hash") {
                         // Execute the hash job.
@@ -130,7 +129,7 @@ int main() {
               catch (const std::exception& e){
                 {
                   std::lock_guard<std::mutex> lock(outputMutex);
-                  std::cerr << "Job" << job.id << "failed: " << e.what() << '\n';
+                  std::cerr << "Job" << job.id << " failed: " << e.what() << '\n';
                 }
 
                 try {
