@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import psycopg2
 import redis
+import json
 
 app = FastAPI()
 
@@ -26,6 +27,8 @@ class JobRequest(BaseModel):
     type: str
     a: int = 0
     b: int = 0
+    duration: int = 0
+    input : str = ""
 
 @app.get("/")
 def root():
@@ -36,38 +39,55 @@ def create_job(job : JobRequest):
     # generate a unique id
     job_id = redis_client.incr("job_id")
 
+    input_data = {
+        "a": job.a,
+        "b": job.b,
+        "duration": job.duration,
+        "input": job.input
+    }
+
 
     #save job in postgresql
     cursor = db.cursor()
 
-    cursor.execute(
-        """
-        INSERT INTO Jobs (id, type, a,b, status)
-        VALUES (%s, %s, %s, %s, %s)
-        """,
+    try:
+        cursor.execute(
+            """
+            INSERT INTO jobs (id, type, input_data, status)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (job_id, job.type, json.dumps(input_data), "pending")
+        )
 
-        (job_id, job.type, job.a, job.b, "queued")
+        db.commit()
+
+    except Exception:
+        db.rollback()
+        raise
+    
+    finally:
+        cursor.close()
+
+    #serialize the job for cpp parser.
+    job_data = (
+        f"{job_id}|{job.type}|{job.a}|{job.b}"
+        f"{job.duration}|{job.input}"
     )
 
-    db.commit()
-    cursor.close()
-
-    #convert job into the format..
-    job_data = f"{job_id}|{job.type}|{job.a}|{job.b}"
-
-    # store the initial job status
+    #store the initial status
     redis_client.set(
-        f"job: {job_id}:status",
-        "queued"
+        f"job:{job_id}:status",
+        "pending"
     )
 
-    #add it to the queue
+    #enqueue the job.
     redis_client.lpush("jobs", job_data)
 
     return {
         "job_id": job_id,
-        "status": "queued"
+        "status": "pending"
     }
+
 
 
 
