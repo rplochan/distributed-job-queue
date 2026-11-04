@@ -1,8 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import psycopg2
 import redis
 import json
+
 
 app = FastAPI()
 
@@ -30,9 +31,74 @@ class JobRequest(BaseModel):
     duration: int = 0
     input : str = ""
 
+SUPPORTED_JOBS = {
+    "add",
+    "subtract",
+    "mult",
+    "multiply",
+    "div",
+    "power",
+    "factorial",
+    "fibonacci",
+    "prime_check",
+    "sleep",
+    "hash"
+}
+
+
 @app.get("/")
 def root():
     return {"message": "Job queue api is running"}
+
+
+# Validate job type
+if job.type not in SUPPORTED_JOBS:
+    raise HTTPException(
+        status_code=400,
+        detail="Unsupported job type"
+    )
+
+# Validate hash input
+if job.type == "hash" and not job.input:
+    raise HTTPException(
+        status_code=400,
+        detail="Hash input cannot be empty"
+    )
+
+# Validate sleep duration
+if job.type == "sleep" and job.duration < 0:
+    raise HTTPException(
+        status_code=400,
+        detail="Sleep duration cannot be negative"
+    )
+
+# Validate division
+if job.type == "div" and job.b == 0:
+    raise HTTPException(
+        status_code=400,
+        detail="Division by zero"
+    )
+
+# Validate factorial
+if job.type == "factorial" and job.a < 0:
+    raise HTTPException(
+        status_code=400,
+        detail="Factorial requires a non-negative integer"
+    )
+
+# Validate fibonacci
+if job.type == "fibonacci" and job.a < 0:
+    raise HTTPException(
+        status_code=400,
+        detail="Fibonacci requires a non-negative integer"
+    )
+
+# Validate power
+if job.type == "power" and job.b < 0:
+    raise HTTPException(
+        status_code=400,
+        detail="Negative exponent is unsupported"
+    )
 
 @app.post("/jobs")
 def create_job(job : JobRequest):
@@ -70,7 +136,7 @@ def create_job(job : JobRequest):
 
     #serialize the job for cpp parser.
     job_data = (
-        f"{job_id}|{job.type}|{job.a}|{job.b}"
+        f"{job_id}|{job.type}|{job.a}|{job.b}|"
         f"{job.duration}|{job.input}"
     )
 
@@ -88,24 +154,40 @@ def create_job(job : JobRequest):
         "status": "pending"
     }
 
-
+    
 
 
 @app.get("/jobs/{job_id}")
 def get_job_status(job_id : int):
 
-    status = redis_client.get(
-        f"job:{job_id}:status"
-    )
+    cursor = db.cursor()
 
-    if status is None:
+    try:
+        cursor.execute(
+            """
+            SELECT status,result_int, result_text, error
+            FROM jobs
+            WHERE id = %s
+            """,
+            (job_id,)
+        )
+
+        result = cursor.fetchone()
+
+        if result is None:
+            return {"error": "Job not found"}
+
+        status, result_int, result_text, error = result
+        
         return {
-            "error": "Job not found"
+            "job_id": job_id,
+            "status": status,
+            "result_int": result_int,
+            "result_text": result_text,
+            "error": error
         }
 
-    return {
-        "job_id": job_id,
-        "status": status
-    }
-
+        finally:
+            cursor.close()
+        
 
