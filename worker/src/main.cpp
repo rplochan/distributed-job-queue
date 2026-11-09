@@ -90,9 +90,7 @@ int main() {
                         // Save the text result and mark the job completed.
                         {
                             std::lock_guard<std::mutex> lock(dbMutex);
-
-                            postgres.updateTextResult(job.id, result);
-                            postgres.updateStatus(job.id, "completed");
+                            postgres.completeTextJob(job.id, result);
                         }
 
                         // Print the result.
@@ -112,8 +110,7 @@ int main() {
                         {
                             std::lock_guard<std::mutex> lock(dbMutex);
 
-                            postgres.updateResult(job.id, result);
-                            postgres.updateStatus(job.id, "completed");
+                            postgres.completeJob(job.id, result);
                         }
 
                         // Print the result.
@@ -134,7 +131,7 @@ int main() {
 
                 try {
                         std::lock_guard<std::mutex> lock(dbMutex);
-                        postgres.updateStatus(job.id, "failed");
+                        postgres.failJob(job.id, e.what());
                     }
                 catch (const std::exception& dbError) {
                         std::lock_guard<std::mutex> lock(outputMutex);
