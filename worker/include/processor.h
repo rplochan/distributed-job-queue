@@ -7,4 +7,5 @@ class JobProcessor {
 public:
     int process(const Job& job);
     std::string processHash(const Job& job);
+    std::string processPDF(const Job& job);
 };

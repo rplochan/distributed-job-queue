@@ -45,7 +45,8 @@ SUPPORTED_JOBS = {
     "fibonacci",
     "prime_check",
     "sleep",
-    "hash"
+    "hash",
+    "pdf_export"
 }
 
 

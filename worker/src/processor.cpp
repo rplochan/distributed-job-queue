@@ -1,6 +1,7 @@
 
 #include "../include/processor.h"
 #include "../include/hash-utils.h"
+#include "../include/pdf-generator.h"
 #include <chrono>
 #include <limits>
 #include <stdexcept>
@@ -147,4 +148,23 @@ std::string JobProcessor::processHash(const Job &job){
         );
     }
     return sha256(job.input);
+}
+
+std::string JobProcessor::processPDF(const Job& job)
+{
+    if (job.type != "pdf_export") {
+        throw std::runtime_error(
+            "processPDF called for non-PDF job"
+        );
+    }
+
+    PDFGenerator generator;
+
+    std::string title = "Task Processing Report";
+
+    return generator.generate(
+        job.id,
+        title,
+        job.input
+    );
 }

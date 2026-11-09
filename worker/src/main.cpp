@@ -102,6 +102,21 @@ int main() {
                                       << result << '\n';
                         }
                     }
+                    else if (job.type == "pdf_export") {
+                            std::string result = processor.processPDF(job);
+
+                             {
+                              std::lock_guard<std::mutex> lock(dbMutex);
+                               postgres.completeTextJob(job.id, result);
+                             }
+
+                             {
+                                std::lock_guard<std::mutex> lock(outputMutex);
+                                std::cout << "Job " << job.id
+                                          << " completed. PDF: "
+                                          << result << '\n';
+                             }
+                    }
                     else {
                         // Execute an integer-result job.
                         int result = processor.process(job);
