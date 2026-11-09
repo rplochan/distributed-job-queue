@@ -25,8 +25,8 @@ void PostgresClient::updateStatus(int jobId, const std::string& status){
     pqxx::work transaction(conn);
 
     transaction.exec_params(
-        "UPDATE jobs"
-        "SET status = $1, updated_at = CURRENT_TIMESTAMP"
+        "UPDATE jobs "
+        "SET status = $1, updated_at = CURRENT_TIMESTAMP "
         "WHERE id = $2",
         status,
         jobId
@@ -35,42 +35,56 @@ void PostgresClient::updateStatus(int jobId, const std::string& status){
     transaction.commit();
 }
 
-void PostgresClient::updateResult(int jobId, int result){
-    pqxx::work transaction(conn);
 
-    transaction.exec_params(
-        "UPDATE jobs"
-        "SET result = $1, updated_at = CURRENT_TIMESTAMP"
-        "WHERE id = $2",
-        result,
-        jobId
-    );
-    transaction.commit();
-}
 
-void PostgresClient::updateTextResult(int jobId, const std::string& result){
-    pqxx::work transaction(conn);
-
-    transaction.exec_params(
-        "UPDATE jobs"
-        "SET result_text = $1, updated_at = CURRENT_TIMESTAMP"
-        "WHERE id = $2",
-        result,
-        jobId
-    );
-
-    transaction.commit();
-}
-
-void PostgresClient::updateError(
+void PostgresClient::completeJob(
     int jobId,
-    const std::string& error)
+    int result
+)
 {
     pqxx::work transaction(conn);
 
     transaction.exec_params(
         "UPDATE jobs "
-        "SET error = $1, status = 'failed', "
+        "SET result_int = $1, "
+        "status = 'completed',"
+        "updated_at = CURRENT_TIMESTAMP "
+        "WHERE id = $2",
+        result,
+        jobId
+    );
+    transaction.commit();
+};
+
+void PostgresClient::completeTextJob(
+    int jobId,
+    const std::string& result
+){
+    pqxx::work transaction(conn);
+
+    transaction.exec_params(
+        "UPDATE jobs "
+        "SET result_text = $1, "
+        "status = 'completed',"
+        "updated_at = CURRENT_TIMESTAMP "
+        "WHERE id = $2",
+        result,
+        jobId
+    );
+
+    transaction.commit();
+};
+
+void PostgresClient::failJob(
+    int jobId,
+    const std::string& error
+){
+    pqxx::work transaction(conn);
+
+    transaction.exec_params(
+        "UPDATE jobs "
+        "SET error = $1, "
+        "status = 'failed',"
         "updated_at = CURRENT_TIMESTAMP "
         "WHERE id = $2",
         error,
@@ -78,4 +92,4 @@ void PostgresClient::updateError(
     );
 
     transaction.commit();
-}
+};

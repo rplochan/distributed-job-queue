@@ -9,7 +9,7 @@ class PostgresClient {
     public:
     PostgresClient();
     void updateStatus(int jobId, const std::string& status);
-    void updateResult(int jobId, int result);
-    void updateTextResult(int jobId, const std::string& result);
-    void updateError(int jobId, const std::string& error);
+    void completeJob(int jobId, int result);
+    void completeTextJob(int jobId, const std::string& result);
+    void failJob(int jobId, const std::string& error);
 };
