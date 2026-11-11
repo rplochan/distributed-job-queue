@@ -117,6 +117,22 @@ int main() {
                                           << result << '\n';
                              }
                     }
+
+                    else if(job.type == "image_resize"){
+                        std::string result = processor.processImageResize(job);
+                        {
+                            std::lock_guard<std::mutex> lock(dbMutex);
+                            postgres.completeTextJob(job.id, result);
+                        }
+                            
+
+                        {
+                            std::lock_guard<std::mutex> lock(outputMutex);
+                            std::cout << "Job" << job.id << "completed. Resized image: "
+                                << result << "\n";
+
+                        }
+                    }
                     else {
                         // Execute an integer-result job.
                         int result = processor.process(job);

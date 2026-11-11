@@ -2,6 +2,7 @@
 #include "../include/processor.h"
 #include "../include/hash-utils.h"
 #include "../include/pdf-generator.h"
+#include "../include/image-resizer.h"
 #include <chrono>
 #include <limits>
 #include <stdexcept>
@@ -166,5 +167,23 @@ std::string JobProcessor::processPDF(const Job& job)
         job.id,
         title,
         job.input
+    );
+}
+
+std::string JobProcessor::processImageResize(const Job& job)
+{
+    if (job.type != "image_resize") {
+        throw std::runtime_error(
+            "processImageResize called for non-image job"
+        );
+    }
+
+    ImageResizer resizer;
+
+    return resizer.resize(
+        job.id,
+        job.input,
+        job.a,
+        job.b
     );
 }

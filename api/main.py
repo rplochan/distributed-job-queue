@@ -47,6 +47,7 @@ SUPPORTED_JOBS = {
     "sleep",
     "hash",
     "pdf_export"
+    "image_resize"
 }
 
 
@@ -105,6 +106,19 @@ def create_job(job: JobRequest):
         raise HTTPException(
             status_code=400,
             detail="Negative exponent unsupported"
+        )
+
+    if job.type == "image_resize":
+        if not job.input.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Input image path is required"
+        )
+
+    if job.a <= 0 or job.b <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Image width and height must be positive"
         )
 
     # 8. Generate unique job ID
