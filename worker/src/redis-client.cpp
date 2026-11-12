@@ -1,7 +1,8 @@
 #pragma once
 #include <hiredis/hiredis.h>
 #include <stdexcept>
-#include "redis-client.h"
+#include "../include/redis-client.h"
+#include <cstdlib>
 
 /*
 C++ Worker
@@ -14,12 +15,21 @@ C++ Worker
 Valkey
 */
 
-RedisClient::RedisClient(){
-    redisContext* redis = redisConnect("127.0.0.1", 6379);
+RedisClient::RedisClient() {
+    const char* host = std::getenv("REDIS_HOST");
+    const char* portEnv = std::getenv("REDIS_PORT");
 
-    if(redis == nullptr || redis->err){
+    std::string redisHost = host ? host : "127.0.0.1";
+    int redisPort = portEnv ? std::stoi(portEnv) : 6379;
+
+    redisContext* redis = redisConnect(
+        redisHost.c_str(),
+        redisPort
+    );
+
+    if (redis == nullptr || redis->err) {
         throw std::runtime_error(
-            "failed to connect to redis"
+            "Failed to connect to Redis/Valkey"
         );
     }
 
