@@ -5,11 +5,11 @@
 
 PostgresClient::PostgresClient()
     : conn(
-        "host=localhost "
-        "port=5432 "
-        "dbname=job-queue "
-        "user=postgres "
-        "password=chatapp123"
+        "host=" + std::string(std::getenv("DB_HOST") ? std::getenv("DB_HOST") : "localhost") +
+        " port=" + std::string(std::getenv("DB_PORT") ? std::getenv("DB_PORT") : "5432") +
+        " dbname=" + std::string(std::getenv("DB_NAME") ? std::getenv("DB_NAME") : "job_queue") +
+        " user=" + std::string(std::getenv("DB_USER") ? std::getenv("DB_USER") : "postgres") +
+        " password=" + std::string(std::getenv("DB_PASSWORD") ? std::getenv("DB_PASSWORD") : "")
       )
 {
     if (!conn.is_open()) {
