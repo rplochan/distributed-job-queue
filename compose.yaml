@@ -1,0 +1,53 @@
+services:
+
+  api:
+    build: ./api
+    container_name: tps-api
+    ports:
+      -"8000:8000"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_PASSWORD}
+      REDIS_HOST: valkey
+      REDIS_PORT: 6379
+    depends_on:
+      - postgres
+      - valkey
+
+  
+  worker:
+   build: ./worker
+   container_name: tps-worker
+   environment:
+    DB_HOST: postgres
+    DB_PORT: 5432
+    DB_NAME: ${DB_NAME}
+    DB_USER: ${DB_USER}
+    DB_PASSWORD: ${DB_PASSWORD}
+    REDIS_HOST: valkey
+    REDIS_PORT: 6379
+    depends_on:
+    - postgres
+    - valkey
+    volumes:
+     - ./output:/app/output
+
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  valkey:
+    image: valkey/valkey:8
+
+volumes:
+  postgres_data:
+
+
+

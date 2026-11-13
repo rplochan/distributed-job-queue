@@ -9,20 +9,19 @@ app = FastAPI()
 
 # PostgreSQL connection
 db = psycopg2.connect(
-    host="localhost",
-    port=5432,
-    database="job_queue",
-    user="postgres",
+    host=os.getenv("DB_HOST", "localhost"),
+    port=int(os.getenv("DB_PORT", "5432")),
+    database=os.getenv("DB_NAME", "job_queue"),
+    user=os.getenv("DB_USER", "postgres"),
     password=os.environ["DB_PASSWORD"]
 )
 
 # Valkey connection
 redis_client = redis.Redis(
-    host="localhost",
-    port=6379,
+    host=os.getenv("REDIS_HOST", "localhost"),
+    port=int(os.getenv("REDIS_PORT", "6379")),
     decode_responses=True
 )
-
 
 # Request model
 class JobRequest(BaseModel):
@@ -46,7 +45,7 @@ SUPPORTED_JOBS = {
     "prime_check",
     "sleep",
     "hash",
-    "pdf_export"
+    "pdf_export",
     "image_resize"
 }
 
@@ -115,10 +114,10 @@ def create_job(job: JobRequest):
                 detail="Input image path is required"
         )
 
-    if job.a <= 0 or job.b <= 0:
-        raise HTTPException(
-            status_code=400,
-            detail="Image width and height must be positive"
+        if job.a <= 0 or job.b <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Image width and height must be positive"
         )
 
     # 8. Generate unique job ID
