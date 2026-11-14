@@ -1,53 +1,67 @@
-services:
 
+services:
   api:
     build: ./api
     container_name: tps-api
     ports:
-      -"8000:8000"
+      - "8000:8000"
+
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_PASSWORD}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: valkey
       REDIS_PORT: 6379
-    depends_on:
-      - postgres
-      - valkey
 
-  
-  worker:
-   build: ./worker
-   container_name: tps-worker
-   environment:
-    DB_HOST: postgres
-    DB_PORT: 5432
-    DB_NAME: ${DB_NAME}
-    DB_USER: ${DB_USER}
-    DB_PASSWORD: ${DB_PASSWORD}
-    REDIS_HOST: valkey
-    REDIS_PORT: 6379
     depends_on:
-    - postgres
-    - valkey
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_started
+
+  worker:
+    build: ./worker
+
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: valkey
+      REDIS_PORT: 6379
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_started
+
     volumes:
-     - ./output:/app/output
+      - ./output:/app/output
 
   postgres:
     image: postgres:17
+
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   valkey:
     image: valkey/valkey:8
 
 volumes:
   postgres_data:
-
-
-
